@@ -1,78 +1,137 @@
+/*DATABASE*/
 
--- Gym Management System SQL Script
-
--- Drop tables if they already exist (for reset)
-DROP TABLE IF EXISTS Attendance;
-DROP TABLE IF EXISTS Access_Card;
-DROP TABLE IF EXISTS Trainer_Assignment;
-DROP TABLE IF EXISTS Payments;
-DROP TABLE IF EXISTS Memberships;
-DROP TABLE IF EXISTS Trainers;
-DROP TABLE IF EXISTS Members;
+DROP DATABASE IF EXISTS gym_management;
+CREATE DATABASE gym_management;
+USE gym_management;
 
 -- Members Table
-CREATE TABLE Members (
-    Member_id INT PRIMARY KEY AUTO_INCREMENT,
-    Name VARCHAR(100) NOT NULL,
-    Age INT,
-    Gender VARCHAR(10),
-    Email VARCHAR(100) UNIQUE,
-    Phone VARCHAR(20),
-    Membership_id INT,
-    Access_card_id INT
+CREATE TABLE members (
+    member_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    age INT,
+    gender ENUM('Male','Female','Other'),
+    email VARCHAR(100) NOT NULL UNIQUE,
+    phone VARCHAR(15) NOT NULL UNIQUE
 );
 
 -- Trainers Table
-CREATE TABLE Trainers (
-    Trainer_id INT PRIMARY KEY AUTO_INCREMENT,
-    Name VARCHAR(100) NOT NULL,
-    Phone VARCHAR(20),
-    Specialization VARCHAR(100),
-    Email VARCHAR(100) UNIQUE
+CREATE TABLE trainers (
+    trainer_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    phone VARCHAR(15) UNIQUE,
+    specialization VARCHAR(100),
+    email VARCHAR(100) NOT NULL UNIQUE
 );
 
 -- Memberships Table
-CREATE TABLE Memberships (
-    Membership_id INT PRIMARY KEY AUTO_INCREMENT,
-    Name VARCHAR(50) NOT NULL,
-    Duration INT NOT NULL, -- duration in months
-    Price DECIMAL(10,2) NOT NULL
+CREATE TABLE memberships (
+    membership_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    duration INT NOT NULL, -- in months
+    price DECIMAL(10,2) NOT NULL
 );
 
 -- Payments Table
-CREATE TABLE Payments (
-    Payment_id INT PRIMARY KEY AUTO_INCREMENT,
-    Member_id INT NOT NULL,
-    Amount DECIMAL(10,2) NOT NULL,
-    Payment_date DATE NOT NULL,
-    FOREIGN KEY (Member_id) REFERENCES Members(Member_id)
+CREATE TABLE payments (
+    payment_id INT AUTO_INCREMENT PRIMARY KEY,
+    member_id INT,
+    amount DECIMAL(10,2) NOT NULL,
+    payment_date DATE DEFAULT CURRENT_DATE,
+    FOREIGN KEY (member_id) REFERENCES members(member_id)
 );
 
--- Trainer Assignment Table
-CREATE TABLE Trainer_Assignment (
-    Assignment_id INT PRIMARY KEY AUTO_INCREMENT,
-    Member_id INT NOT NULL,
-    Trainer_id INT NOT NULL,
-    FOREIGN KEY (Member_id) REFERENCES Members(Member_id),
-    FOREIGN KEY (Trainer_id) REFERENCES Trainers(Trainer_id)
+-- Access Cards Table
+CREATE TABLE access_cards (
+    access_card_id INT AUTO_INCREMENT PRIMARY KEY,
+    member_id INT UNIQUE,
+    status ENUM('Active','Inactive') DEFAULT 'Active',
+    FOREIGN KEY (member_id) REFERENCES members(member_id)
 );
 
--- Access Card Table
-CREATE TABLE Access_Card (
-    Access_card_id INT PRIMARY KEY AUTO_INCREMENT,
-    Member_id INT NOT NULL,
-    Status VARCHAR(20) NOT NULL,
-    FOREIGN KEY (Member_id) REFERENCES Members(Member_id)
+-- Trainer Assignments Table
+CREATE TABLE trainer_assignments (
+    assignment_id INT AUTO_INCREMENT PRIMARY KEY,
+    member_id INT,
+    trainer_id INT,
+    FOREIGN KEY (member_id) REFERENCES members(member_id),
+    FOREIGN KEY (trainer_id) REFERENCES trainers(trainer_id)
 );
 
 -- Attendance Table
-CREATE TABLE Attendance (
-    Attendance_id INT PRIMARY KEY AUTO_INCREMENT,
-    Member_id INT NOT NULL,
-    Access_card_id INT NOT NULL,
-    Date DATE NOT NULL,
-    Check_in_time TIME,
-    Check_out_time TIME,
-    FOREIGN KEY (Member_id) REFERENCES Members(Member_id),
-    FOREIGN KEY (Access_card_id) REFERENCES Access_Card(Access_card_id)
+CREATE TABLE attendance (
+    attendance_id INT AUTO_INCREMENT PRIMARY KEY,
+    member_id INT,
+    access_card_id INT,
+    date DATE NOT NULL,
+    check_in_time TIME,
+    check_out_time TIME,
+    FOREIGN KEY (member_id) REFERENCES members(member_id),
+    FOREIGN KEY (access_card_id) REFERENCES access_cards(access_card_id)
 );
+
+-- Insert Memberships
+INSERT INTO memberships (name, duration, price) VALUES
+('Monthly Basic', 1, 2000.00),
+('Quarterly Standard', 3, 5000.00),
+('Yearly Premium', 12, 15000.00);
+
+-- Insert Trainers
+INSERT INTO trainers (name, phone, specialization, email) VALUES
+('Ashraful Islam', '01710000001', 'Fitness', 'Siam.trainer@gym.com'),
+('Robiul Awal Showruv', '01710000002', 'Yoga', 'Robiul.trainer@gym.com'),
+('Jahid Hossain Haolader', '01710000003', 'Bodybuilding', 'Jahid.trainer@gym.com');
+
+-- Insert Members
+INSERT INTO members (name, age, gender, email, phone) VALUES
+('Md Noman', 25, 'Male', 'noman@gym.com', '01820000001'),
+('Faysal Ahmed', 22, 'Male', 'faysal@gym.com', '01820000002'),
+('Imran Ali', 30, 'Male', 'imran@gym.com', '01820000003');
+
+-- Insert Access Cards
+INSERT INTO access_cards (member_id, status) VALUES
+(1, 'Active'),
+(2, 'Active'),
+(3, 'Inactive');
+
+-- Insert Payments
+INSERT INTO payments (member_id, amount, payment_date) VALUES
+(1, 2000.00, '2025-08-01'),
+(2, 5000.00, '2025-07-15'),
+(3, 15000.00, '2025-01-01');
+
+-- Insert Trainer Assignments
+INSERT INTO trainer_assignments (member_id, trainer_id) VALUES
+(1, 1),
+(2, 2),
+(3, 3);
+
+-- Insert Attendance
+INSERT INTO attendance (member_id, access_card_id, date, check_in_time, check_out_time) VALUES
+(1, 1, '2025-08-20', '09:00:00', '10:30:00'),
+(2, 2, '2025-08-20', '11:00:00', '12:15:00');
+
+
+
+
+
+
+-- Function to auto generate Access Card when new Member is added
+DELIMITER $$
+
+CREATE FUNCTION generate_access_card(mid INT) 
+RETURNS VARCHAR(50)
+DETERMINISTIC
+BEGIN
+    DECLARE card_no VARCHAR(50);
+
+    -- card number
+    SET card_no = CONCAT('CARD-', mid, '-', UNIX_TIMESTAMP());
+
+    -- access_cards 
+    INSERT INTO access_cards (member_id, status)
+    VALUES (mid, 'Active');
+
+    RETURN card_no;
+END$$
+
+DELIMITER ;
