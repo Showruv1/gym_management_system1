@@ -20,10 +20,10 @@ if (isset($_POST['save'])) {
         $stmt->bind_param("sisssi", $name, $age, $gender, $email, $phone, $id);
         $stmt->execute();
 
-    // নতুন member এর ID বের করা
+    
     $new_member_id = $conn->insert_id;
 
-    // Access card function কল করা
+   
     $sql = "SELECT generate_access_card($new_member_id) AS card_no";
     $result = $conn->query($sql);
     if ($result && $row = $result->fetch_assoc()) {
@@ -36,10 +36,10 @@ if (isset($_POST['save'])) {
         $stmt->bind_param("sisss", $name, $age, $gender, $email, $phone);
         $stmt->execute();
 
-    // নতুন member এর ID বের করা
+    
     $new_member_id = $conn->insert_id;
 
-    // Access card function কল করা
+    
     $sql = "SELECT generate_access_card($new_member_id) AS card_no";
     $result = $conn->query($sql);
     if ($result && $row = $result->fetch_assoc()) {
@@ -57,10 +57,10 @@ if (isset($_GET['delete'])) {
     $stmt->bind_param("i", $id);
     $stmt->execute();
 
-    // নতুন member এর ID বের করা
+    
     $new_member_id = $conn->insert_id;
 
-    // Access card function কল করা
+   
     $sql = "SELECT generate_access_card($new_member_id) AS card_no";
     $result = $conn->query($sql);
     if ($result && $row = $result->fetch_assoc()) {
@@ -78,10 +78,10 @@ if (isset($_GET['edit'])) {
     $stmt->bind_param("i", $id);
     $stmt->execute();
 
-    // নতুন member এর ID বের করা
+   
     $new_member_id = $conn->insert_id;
 
-    // Access card function কল করা
+   
     $sql = "SELECT generate_access_card($new_member_id) AS card_no";
     $result = $conn->query($sql);
     if ($result && $row = $result->fetch_assoc()) {
